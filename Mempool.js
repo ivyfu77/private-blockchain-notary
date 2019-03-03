@@ -69,6 +69,18 @@ class Mempool {
     delete this.mempool[address];
     delete this.timeoutRequests[address];
   }
+
+  verifyAddressRequest(address) {
+    if (this.mempool[address]) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  verifyRequestByWallet(address) {
+    return this.mempool[address].messageSignature;
+  }
 }
 
 module.exports.Mempool = Mempool;

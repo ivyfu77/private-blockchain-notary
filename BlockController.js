@@ -2,6 +2,7 @@ const SHA256 = require('crypto-js/sha256');
 const Block = require('./Block.js');
 const Blockchain = require('./BlockChain.js');
 const Mempool = require('./Mempool.js');
+const Hex2ascii = require('hex2ascii');
 
 /**
  * Controller Definition to encapsulate routes to work with blocks
@@ -17,7 +18,6 @@ class BlockController {
     this.blockchain = new Blockchain.Blockchain();
     this.blocks = [];
     this.mempool = new Mempool.Mempool();
-    this.initializeMockData();
     this.getBlockByIndex();
     this.postNewBlock();
     this.postRequestValidation();
@@ -55,14 +55,29 @@ class BlockController {
       method: 'POST',
       path: '/api/block',
       handler: (request, h) => {
-        let body = request.payload ? request.payload.body : null;
-        if (!body) {
-          return { error: 'Request must has valid body payload'}
+        let body = request.payload;
+        if (!body || !body.address || !body.star) {
+          return { error: 'Request must has valid wallet address and star payload' };
         }
+
+        if (!self.mempool.verifyAddressRequest(body.address)) {
+          return { error: `Time out or haven't requested validation, use /requestValidation to request validation` };
+        }
+
+        if (!self.mempool.verifyRequestByWallet(body.address)) {
+          return { error: `Can't add block. Message verification failed.` }
+        }
+
         let newBlock = new Block.Block(body);
+        const { story } = body.star;
+        const storyBuffer = Buffer.from(story, "utf8");
+        newBlock.body.star.story = storyBuffer.toString("hex");
+
         return self.blockchain.addBlock(newBlock)
           .then((result) => {
-            return JSON.parse(result);
+            const block = JSON.parse(result);
+            // block.body.star.storyDecode = Hex2ascii(block.body.star.story);
+            return block;
           })
           .catch((err) => {
             console.log('Error: ', err);
@@ -131,22 +146,6 @@ class BlockController {
         }
       }
     });
-  }
-
-  /**
-   * Help method to inizialized Mock dataset, adds 10 test blocks to the blocks array
-   */
-  async initializeMockData() {
-    let self = this;
-    await (function theLoop (i) {
-      setTimeout(function () {
-        let blockTest = new Block.Block("Test Block - " + (i + 1));
-        self.blockchain.addBlock(blockTest).then((result) => {
-          i++;
-          if (i < 5) theLoop(i);
-        });
-      }, 100);
-    })(0);
   }
 
 }
