@@ -1,6 +1,7 @@
 const SHA256 = require('crypto-js/sha256');
 const Block = require('./Block.js');
 const Blockchain = require('./BlockChain.js');
+const Mempool = require('./Mempool.js');
 
 /**
  * Controller Definition to encapsulate routes to work with blocks
@@ -15,9 +16,11 @@ class BlockController {
     this.server = server;
     this.blockchain = new Blockchain.Blockchain();
     this.blocks = [];
+    this.mempool = new Mempool.Mempool();
     this.initializeMockData();
     this.getBlockByIndex();
     this.postNewBlock();
+    this.postRequestValidation();
   }
 
   /**
@@ -64,6 +67,30 @@ class BlockController {
             console.log('Error: ', err);
             return err;
           })
+      }
+    });
+  }
+
+  /**
+   * Implement a POST Endpoint to submit a validation request, url: "/requestValidation"
+   */
+  postRequestValidation() {
+    let self = this;
+    self.server.route({
+      method: 'POST',
+      path: '/requestValidation',
+      handler: (request, h) => {
+        let address = request.payload ? request.payload.address : null;
+        if (!address) {
+          return { error: 'Request must has valid address payload'}
+        }
+        const memory = self.mempool.addRequestValidation(address);
+        return {
+          'walletAddress': memory.address,
+          'requestTimeStamp': memory.requestTimeStamp,
+          'message': memory.message,
+          'validationWindow': memory.validationWindow
+        }
       }
     });
   }
