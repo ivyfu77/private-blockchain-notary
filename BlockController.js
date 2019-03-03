@@ -21,6 +21,7 @@ class BlockController {
     this.getBlockByIndex();
     this.postNewBlock();
     this.postRequestValidation();
+    this.postValidate();
   }
 
   /**
@@ -90,6 +91,43 @@ class BlockController {
           'requestTimeStamp': memory.requestTimeStamp,
           'message': memory.message,
           'validationWindow': memory.validationWindow
+        }
+      }
+    });
+  }
+
+  /**
+   * Implement a POST Endpoint to validate message signature, url: "/message-signature/validate"
+   */
+  postValidate() {
+    let self = this;
+    self.server.route({
+      method: 'POST',
+      path: '/message-signature/validate',
+      handler: (request, h) => {
+        let address = request.payload ? request.payload.address : null;
+        if (!address) {
+          return { error: 'Request must has valid address payload'}
+        }
+
+        let signature = request.payload ? request.payload.signature : null;
+        if (!signature) {
+          return { error: 'Request must has valid signature payload'}
+        }
+
+        const memory = self.mempool.validateRequestByWallet(address, signature);
+        if (!memory.messageSignature) {
+          return { error: memory.validateMessage || 'Error happend during verification' }
+        }
+        return {
+          registerStar: memory.messageSignature,
+          status: {
+            address: memory.address,
+            requestTimeStamp: memory.requestTimeStamp,
+            message: memory.message,
+            validationWindow: memory.validationWindow,
+            messageSignature: memory.messageSignature
+          }
         }
       }
     });
