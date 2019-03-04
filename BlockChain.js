@@ -84,6 +84,11 @@ class Blockchain {
     return this.db.getBlockByHash(hash);
   }
 
+  // Get Block Array by wallet address
+  getBlockByWalletAddress(address) {
+    return this.db.getBlockByWalletAddress(address);
+  }
+
   // Validate if Block is being tampered by Block Height
   validateBlock(height) {
     let self = this;

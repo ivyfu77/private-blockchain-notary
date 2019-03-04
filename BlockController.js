@@ -20,6 +20,7 @@ class BlockController {
     this.mempool = new Mempool.Mempool();
     this.getBlockByIndex();
     this.getBlockByHash();
+    this.getBlockByWalletAddress();
     this.postNewBlock();
     this.postRequestValidation();
     this.postValidate();
@@ -38,7 +39,14 @@ class BlockController {
         return self.blockchain.getBlock(index)
           .then((block) => {
             if (block !== undefined) {
-              return JSON.parse(block);
+              let result = JSON.parse(block);
+
+              // Avoid decode non-exist star.story in Genesis Block
+              if (result.height !== 0) {
+                result.body.star.storyDecoded = Hex2ascii(result.body.star.story);
+              }
+
+              return result;
             } else {
               return { error: `Block#${index} not found` };
             }
@@ -62,7 +70,7 @@ class BlockController {
             if (block) {
               // Avoid decode non-exist star.story in Genesis Block
               if (block.height !== 0) {
-                block.body.star.storyDecode = Hex2ascii(block.body.star.story);
+                block.body.star.storyDecoded = Hex2ascii(block.body.star.story);
               }
               return block;
             }
@@ -73,6 +81,36 @@ class BlockController {
           })
       }
     });
+  }
+
+  /**
+   * Implement a GET Endpoint to retrieve a block by wallet address, url: "/api/block/address:[address]"
+   */
+  getBlockByWalletAddress() {
+    let self = this;
+
+    self.server.route({
+      method: 'GET',
+      path: '/api/block/address:{address}',
+      handler: (request, h) => {
+        let result = [];
+        const address = request.params && request.params.address;
+        return self.blockchain.getBlockByWalletAddress(address)
+          .then(arr => {
+            if (arr && arr.length > 0) {
+              arr.map(block => {
+                block.body.star.storyDecoded = Hex2ascii(block.body.star.story);
+                result.push(block);
+              })
+            }
+            return result;
+          })
+          .catch(err => {
+            console.log(`Error: ${err}`);
+            return { error: `${err}` };
+          })
+      }
+    })
   }
 
   /**
@@ -105,7 +143,6 @@ class BlockController {
         return self.blockchain.addBlock(newBlock)
           .then((result) => {
             const block = JSON.parse(result);
-            // block.body.star.storyDecode = Hex2ascii(block.body.star.story);
             return block;
           })
           .catch((err) => {

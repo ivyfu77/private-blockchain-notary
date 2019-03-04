@@ -85,6 +85,29 @@ class LevelSandbox {
     });
   }
 
+  // Get block by wallet address param
+  // Return: array
+  getBlockByWalletAddress(address) {
+    let self = this;
+    let result = [];
+
+    return new Promise((resolve, reject) => {
+      self.db.createReadStream()
+      .on('data', (data) => {
+        const block = data && JSON.parse(data.value);
+        if (block.body && block.body.address === address) {
+          result.push(block)
+        }
+      })
+      .on('error', (err) => {
+        reject(err);
+      })
+      .on('close', () => {
+        resolve(result);
+      })
+    })
+  }
+
   // Method that return the height
   getBlocksCount() {
     let self = this;
