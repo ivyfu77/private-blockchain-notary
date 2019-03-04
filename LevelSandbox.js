@@ -64,6 +64,27 @@ class LevelSandbox {
     });
   }
 
+  // Get block by hash param
+  getBlockByHash(hash) {
+    let self = this;
+
+    return new Promise((resolve, reject) => {
+      self.db.createReadStream()
+      .on('data', (data) => {
+        const block = data && JSON.parse(data.value);
+        if (block.hash === hash) {
+          resolve(block)
+        }
+      })
+      .on('error', (err) => {
+        reject(err);
+      })
+      .on('close', () => {
+        reject('Block not found.');
+      })
+    });
+  }
+
   // Method that return the height
   getBlocksCount() {
     let self = this;

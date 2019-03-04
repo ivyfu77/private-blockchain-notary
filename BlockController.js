@@ -19,6 +19,7 @@ class BlockController {
     this.blocks = [];
     this.mempool = new Mempool.Mempool();
     this.getBlockByIndex();
+    this.getBlockByHash();
     this.postNewBlock();
     this.postRequestValidation();
     this.postValidate();
@@ -41,6 +42,34 @@ class BlockController {
             } else {
               return { error: `Block#${index} not found` };
             }
+          })
+      }
+    });
+  }
+
+  /**
+   * Implement a GET Endpoint to retrieve a block by hash, url: "/api/block/hash:[hash]"
+   */
+  getBlockByHash() {
+    let self = this;
+    this.server.route({
+      method: 'GET',
+      path: '/api/block/hash:{hash}',
+      handler: (request, h) => {
+        const hash = request.params && request.params.hash;
+        return self.blockchain.getBlockByHash(hash)
+          .then((block) => {
+            if (block) {
+              // Avoid decode non-exist star.story in Genesis Block
+              if (block.height !== 0) {
+                block.body.star.storyDecode = Hex2ascii(block.body.star.story);
+              }
+              return block;
+            }
+          })
+          .catch(err => {
+            console.log(`Error: ${err}`);
+            return { error: `${err}` };
           })
       }
     });

@@ -14,9 +14,6 @@ class Blockchain {
   }
 
   // Helper method to create a Genesis Block (always with height= 0)
-  // You have to options, because the method will always execute when you create your blockchain
-  // you will need to set this up statically or instead you can verify if the height !== 0 then you
-  // will not create the genesis block
   generateGenesisBlock(){
     let self = this;
     return new Promise((resolve, reject) => {
@@ -80,6 +77,11 @@ class Blockchain {
       .catch((err) => {
         console.log(`Error happened when getBlock(${height}): ${err}`)
       })
+  }
+
+  // Get Block by Hash
+  getBlockByHash(hash) {
+    return this.db.getBlockByHash(hash);
   }
 
   // Validate if Block is being tampered by Block Height
