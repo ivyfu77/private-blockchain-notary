@@ -33,7 +33,7 @@ class BlockController {
     let self = this;
     this.server.route({
       method: 'GET',
-      path: '/api/block/{index}',
+      path: '/block/{index}',
       handler: (request, h) => {
         const index = request.params.index;
         return self.blockchain.getBlock(index)
@@ -62,7 +62,7 @@ class BlockController {
     let self = this;
     this.server.route({
       method: 'GET',
-      path: '/api/block/hash:{hash}',
+      path: '/stars/hash:{hash}',
       handler: (request, h) => {
         const hash = request.params && request.params.hash;
         return self.blockchain.getBlockByHash(hash)
@@ -91,7 +91,7 @@ class BlockController {
 
     self.server.route({
       method: 'GET',
-      path: '/api/block/address:{address}',
+      path: '/stars/address:{address}',
       handler: (request, h) => {
         let result = [];
         const address = request.params && request.params.address;
@@ -120,7 +120,7 @@ class BlockController {
     let self = this;
     this.server.route({
       method: 'POST',
-      path: '/api/block',
+      path: '/block',
       handler: (request, h) => {
         let body = request.payload;
         if (!body || !body.address || !body.star) {
@@ -143,6 +143,7 @@ class BlockController {
         return self.blockchain.addBlock(newBlock)
           .then((result) => {
             const block = JSON.parse(result);
+            self.mempool.removeValidationRequest(body.address);
             return block;
           })
           .catch((err) => {
@@ -200,6 +201,7 @@ class BlockController {
         if (!memory.messageSignature) {
           return { error: memory.validateMessage || 'Error happend during verification' }
         }
+
         return {
           registerStar: memory.messageSignature,
           status: {

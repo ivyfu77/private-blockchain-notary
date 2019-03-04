@@ -62,6 +62,8 @@ class Mempool {
     const timePass = (new Date().getTime().toString().slice(0,-3)) - memory.requestTimeStamp;
     memory.validationWindow = TimeoutRequestsWindowTime/1000 - timePass;
 
+    delete self.timeoutRequests[address];
+
     return memory;
   }
 
